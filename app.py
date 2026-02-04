@@ -20,16 +20,15 @@ def go_auto():
 def go_manual():
     st.session_state.view_mode = 'manual'
 
-# --- 3. API Key 처리 (Secrets 우선) ---
+# --- 3. API Key 처리 (Secrets 사용) ---
+# GitHub 코드에는 절대 키를 적지 마세요! Streamlit Secrets에서 가져옵니다.
 if "GOOGLE_API_KEY" in st.secrets:
     api_key = st.secrets["GOOGLE_API_KEY"]
     sidebar_msg = "🔐 사내 인증키 자동 적용됨"
 else:
-    # 키가 없을 경우 (로컬 테스트용 예비책)
     api_key = "" 
     sidebar_msg = "⚠️ API Key가 설정되지 않았습니다."
 
-# 사이드바 표시
 with st.sidebar:
     st.image("https://cdn.tridge.com/assets/images/logo-dark.svg", width=150)
     st.info(sidebar_msg)
@@ -53,19 +52,20 @@ Structure the response into 4 Phases using horizontal dividers (---).
 3단계: 마케팅 및 수요 창출 (Marketing)
 4단계: 세일즈 실행 (Sales Execution)
 """
-model_name = "gemini-1.5-flash" # 속도와 안정성을 위해 Flash 모델 사용
+
+# [중요] 최신 라이브러리(0.8.3)에서 지원하는 안정적인 모델명
+model_name = "gemini-1.5-flash-latest"
 
 # --- 5. 화면 로직 구현 ---
 
-# [HOME] 메인 랜딩 페이지 (큰 버튼 2개)
+# [HOME] 메인 랜딩 페이지
 if st.session_state.view_mode == 'home':
     st.title("🌍 Tridge Global Market Strategist")
     st.markdown("### 시장의 위기를 기회로 전환하는 GTM 전략 설계 도구")
     st.markdown("---")
-    st.write("") # 여백
+    st.write("")
     
     col1, col2 = st.columns(2)
-    
     with col1:
         st.info("🤖 **AI 자동 탐지 모드**")
         st.markdown("최근 2주간의 **글로벌 농식품 공급망 이슈**를 구글에서 찾아 분석합니다.")
@@ -80,7 +80,7 @@ if st.session_state.view_mode == 'home':
             go_manual()
             st.rerun()
 
-# [MODE A] 자동 검색 화면 (오류 수정됨)
+# [MODE A] 자동 검색 화면 (도구 정의 오류 수정됨)
 elif st.session_state.view_mode == 'auto':
     st.title("🚀 최신 시장 리스크 스캔")
     st.markdown("---")
@@ -92,7 +92,7 @@ elif st.session_state.view_mode == 'auto':
             try:
                 genai.configure(api_key=api_key)
                 
-                # [핵심 수정] 도구 정의 방식 변경 (오류 해결 파트)
+                # [수정됨] 도구 정의 방식 (v0.8.3 호환)
                 tools = [
                     genai.protos.Tool(
                         google_search_retrieval=genai.protos.GoogleSearchRetrieval(
@@ -118,7 +118,7 @@ elif st.session_state.view_mode == 'manual':
     st.markdown("---")
 
     user_input = st.text_area("분석할 상황을 자세히 입력하세요", height=150, 
-                             placeholder="예: 브라질 가뭄으로 인한 대두 생산량 20% 감소가 예상되며...")
+                             placeholder="기사 내용이나 시장 상황을 여기에 붙여넣으세요.")
     
     if st.button("📊 GTM 플레이북 생성 (Start)", type="primary", use_container_width=True):
         if user_input and api_key:
