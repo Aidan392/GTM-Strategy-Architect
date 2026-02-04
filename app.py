@@ -1,5 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
+from google.ai.generativelanguage import Content, Part
 
 # --- 1. 페이지 설정 ---
 st.set_page_config(
@@ -8,108 +9,134 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- 2. 사이드바: API Key 입력창 ---
+# --- 2. 화면 상태 관리 (Session State) ---
+if 'view_mode' not in st.session_state:
+    st.session_state.view_mode = 'home'
+
+def go_home():
+    st.session_state.view_mode = 'home'
+def go_auto():
+    st.session_state.view_mode = 'auto'
+def go_manual():
+    st.session_state.view_mode = 'manual'
+
+# --- 3. API Key 처리 (Secrets 우선) ---
+if "GOOGLE_API_KEY" in st.secrets:
+    api_key = st.secrets["GOOGLE_API_KEY"]
+    sidebar_msg = "🔐 사내 인증키 자동 적용됨"
+else:
+    # 키가 없을 경우 (로컬 테스트용 예비책)
+    api_key = "" 
+    sidebar_msg = "⚠️ API Key가 설정되지 않았습니다."
+
+# 사이드바 표시
 with st.sidebar:
     st.image("https://cdn.tridge.com/assets/images/logo-dark.svg", width=150)
-    st.title("⚙️ 설정")
-    
-    # 비밀번호 형태로 입력받아 화면에 노출되지 않음
-    api_key = st.text_input("Google API Key를 입력하세요", type="password")
-    
+    st.info(sidebar_msg)
+    if st.session_state.view_mode != 'home':
+        st.button("🏠 홈으로 이동", on_click=go_home, use_container_width=True)
+
+# --- 4. 모델 설정 ---
+system_instruction = """
+### ROLE
+You are the "Tridge GTM Strategy Architect."
+Your mission is to architect comprehensive Go-to-Market plays that convert global market disruptions into immediate revenue opportunities for Tridge.
+
+### LANGUAGE RULES (MANDATORY)
+1. OUTPUT LANGUAGE: KOREAN (한국어) ONLY.
+2. Terminology: Use professional Korean terms (e.g., 공급망, 대체 산지, 도착 원가).
+
+### OUTPUT SCHEMA: TRIDGE GTM PLAYBOOK
+Structure the response into 4 Phases using horizontal dividers (---).
+1단계: 시장 인텔리전스 (Market Intelligence)
+2단계: 제품 및 가격 전략 (Product & Pricing)
+3단계: 마케팅 및 수요 창출 (Marketing)
+4단계: 세일즈 실행 (Sales Execution)
+"""
+model_name = "gemini-1.5-flash" # 속도와 안정성을 위해 Flash 모델 사용
+
+# --- 5. 화면 로직 구현 ---
+
+# [HOME] 메인 랜딩 페이지 (큰 버튼 2개)
+if st.session_state.view_mode == 'home':
+    st.title("🌍 Tridge Global Market Strategist")
+    st.markdown("### 시장의 위기를 기회로 전환하는 GTM 전략 설계 도구")
     st.markdown("---")
-    st.caption("API Key는 저장되지 않으며, 일회성으로만 사용됩니다.")
-    st.markdown("[🔑 API Key 발급받기](https://aistudio.google.com/)")
+    st.write("") # 여백
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.info("🤖 **AI 자동 탐지 모드**")
+        st.markdown("최근 2주간의 **글로벌 농식품 공급망 이슈**를 구글에서 찾아 분석합니다.")
+        if st.button("🚀 최신 시장 리스크 스캔하기", use_container_width=True):
+            go_auto()
+            st.rerun()
 
-# --- 3. 메인 화면 ---
-st.title("🌍 Tridge Global Market Strategist")
-st.markdown("### 시장의 위기를 기회로 전환하는 GTM 전략 설계 도구")
+    with col2:
+        st.warning("📝 **전문가 분석 모드**")
+        st.markdown("특정 뉴스나 이슈를 **직접 입력**하여 심층 전략 보고서를 설계합니다.")
+        if st.button("✍️ 뉴스 직접 입력해서 분석하기", use_container_width=True):
+            go_manual()
+            st.rerun()
 
-# --- 4. AI 모델 구동 로직 ---
-if api_key:
-    try:
-        # 1) API 설정
-        genai.configure(api_key=api_key)
-        
-        # 2) 시스템 프롬프트 (뇌 이식)
-        system_instruction = """
-        ### ROLE
-        You are the "Tridge GTM Strategy Architect."
-        Your mission is to architect comprehensive Go-to-Market plays that convert global market disruptions into immediate revenue opportunities for Tridge.
+# [MODE A] 자동 검색 화면 (오류 수정됨)
+elif st.session_state.view_mode == 'auto':
+    st.title("🚀 최신 시장 리스크 스캔")
+    st.markdown("---")
 
-        ### LANGUAGE RULES (MANDATORY)
-        1. OUTPUT LANGUAGE: KOREAN (한국어) ONLY.
-        2. Terminology: Use professional Korean terms (e.g., 공급망, 대체 산지, 도착 원가).
-
-        ### OUTPUT SCHEMA: TRIDGE GTM PLAYBOOK
-        Structure the response into 4 Phases using horizontal dividers (---).
+    if api_key:
+        prompt = "최근 2주간 글로벌 농식품 공급망에 타격을 준 주요 이슈 3가지를 구글 검색으로 찾아서 한국어로 요약해주고, 각각 Tridge의 영업 기회인지 분석해줘."
         
-        1단계: 시장 인텔리전스 (Market Intelligence)
-        - 이벤트 심층 분석 (수치 포함)
-        - 나비 효과 분석 (산지 -> 바이어 영향)
-        - 타겟 기업 분석 (Tier 1 기업 실명 거론)
-        
-        2단계: 제품 및 가격 전략 (Product & Pricing)
-        - 솔루션 패키지명
-        - 핵심 기능 매핑 (Tridge Eye, Suppliers)
-        - 가격 제안
-        
-        3단계: 마케팅 및 수요 창출 (Marketing)
-        - 콘텐츠 제목 (웨비나/백서)
-        - SNS 훅
-        
-        4단계: 세일즈 실행 (Sales Execution)
-        - 콜드 이메일 (제목, 본문)
-        - 거절 대응 스크립트
-        """
-
-        # 3) 모델 초기화
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-pro",
-            system_instruction=system_instruction
-        )
-        
-        # --- 5. 기능 구현 (탭) ---
-        tab1, tab2 = st.tabs(["🔍 시장 이슈 자동 검색", "📝 뉴스 직접 분석"])
-
-        with tab1:
-            st.write("구글 검색을 통해 최근 2주간의 주요 농식품 공급망 이슈를 찾습니다.")
-            if st.button("🚀 최신 시장 리스크 스캔하기"):
-                prompt = "최근 2주간 글로벌 농식품 공급망에 타격을 준 주요 이슈 3가지를 구글 검색으로 찾아서 한국어로 요약해주고, 각각 Tridge의 영업 기회인지 분석해줘."
+        with st.spinner("🔍 전 세계 뉴스를 스캔 중입니다... (약 15초 소요)"):
+            try:
+                genai.configure(api_key=api_key)
                 
-                with st.spinner("최신 뉴스를 분석 중입니다..."):
-                    try:
-                        # 검색 도구 활성화된 모델 별도 호출
-                        tools_model = genai.GenerativeModel('gemini-1.5-pro', tools='google_search-retrieval')
-                        response = tools_model.generate_content(prompt)
-                        st.markdown(response.text)
-                    except Exception as e:
-                        st.error(f"검색 오류 발생: {e}")
+                # [핵심 수정] 도구 정의 방식 변경 (오류 해결 파트)
+                tools = [
+                    genai.protos.Tool(
+                        google_search_retrieval=genai.protos.GoogleSearchRetrieval(
+                            dynamic_retrieval_config=genai.protos.DynamicRetrievalConfig(
+                                mode=genai.protos.DynamicRetrievalConfig.Mode.MODE_DYNAMIC
+                            )
+                        )
+                    )
+                ]
+                
+                tools_model = genai.GenerativeModel(model_name, tools=tools)
+                response = tools_model.generate_content(prompt)
+                st.markdown(response.text)
+            except Exception as e:
+                st.error(f"오류 발생: {e}")
+                st.caption("잠시 후 다시 시도해보세요.")
+    else:
+        st.error("관리자 설정(Secrets)에 API Key가 없습니다.")
 
-        with tab2:
-            st.write("분석하고 싶은 특정 뉴스나 상황을 입력하세요.")
-            user_input = st.text_area("예: 캐나다-미국 관세 전쟁으로 커피 가격 상승 예상", height=100)
+# [MODE B] 직접 입력 화면
+elif st.session_state.view_mode == 'manual':
+    st.title("📝 뉴스 직접 분석 & 전략 수립")
+    st.markdown("---")
+
+    user_input = st.text_area("분석할 상황을 자세히 입력하세요", height=150, 
+                             placeholder="예: 브라질 가뭄으로 인한 대두 생산량 20% 감소가 예상되며...")
+    
+    if st.button("📊 GTM 플레이북 생성 (Start)", type="primary", use_container_width=True):
+        if user_input and api_key:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel(model_name=model_name, system_instruction=system_instruction)
+            prompt = f"다음 상황에 대한 4단계 GTM Playbook을 완벽한 한국어 보고서로 작성해줘:\n\n{user_input}"
             
-            if st.button("📊 GTM 플레이북 생성"):
-                if user_input:
-                    prompt = f"다음 상황에 대한 4단계 GTM Playbook을 완벽한 한국어 보고서로 작성해줘:\n\n{user_input}"
-                    
-                    with st.spinner("전략 보고서를 설계 중입니다..."):
-                        try:
-                            response = model.generate_content(prompt)
-                            st.markdown(response.text)
-                        except Exception as e:
-                            st.error(f"생성 오류 발생: {e}")
-                else:
-                    st.warning("분석할 내용을 입력해주세요.")
+            with st.spinner("💡 전략 시나리오를 설계 중입니다..."):
+                try:
+                    response = model.generate_content(prompt)
+                    st.markdown(response.text)
+                except Exception as e:
+                    st.error(f"오류 발생: {e}")
+        elif not api_key:
+            st.error("API Key가 설정되지 않았습니다.")
+        else:
+            st.warning("내용을 입력해주세요.")
 
-    except Exception as e:
-        st.error(f"API Key가 올바르지 않습니다: {e}")
-
-else:
-    # 키가 없을 때 안내 문구
-    st.warning("👈 왼쪽 사이드바에 Google API Key를 입력해주세요.")
-    st.info("팀원들은 각자의 API Key를 입력하여 사용할 수 있습니다.")
-
-# --- Footer ---
+# Footer
 st.markdown("---")
-st.caption("Powered by Tridge Data Intelligence & Google Gemini 1.5 Pro")
+st.caption("Powered by Tridge Data Intelligence & Google Gemini 1.5 Flash")
