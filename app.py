@@ -24,29 +24,27 @@ st.markdown("""
         background-color: #161B22;
         border-right: 1px solid #30363D;
     }
-    /* 사이드바 안의 버튼 텍스트 색상 */
-    section[data-testid="stSidebar"] button {
-        color: #FAFAFA !important; 
+    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {
+        color: #E6EDF3 !important;
     }
 
-    /* 3. 홈 화면 카드(Column) 박스 디자인 - 확실한 구분감 */
+    /* 3. 홈 화면 카드(Column) 박스 디자인 */
     div[data-testid="column"] {
-        background-color: #161B22; /* 카드 배경색 (메인보다 약간 밝음) */
-        border: 1px solid #30363D; /* 테두리 */
-        border-radius: 15px;       /* 둥근 모서리 */
-        padding: 30px;             /* 내부 여백 */
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5); /* 그림자 */
+        background-color: #161B22; 
+        border: 1px solid #30363D; 
+        border-radius: 15px;       
+        padding: 30px;             
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5); 
         height: 100%;
     }
-    /* 마우스 올렸을 때 효과 */
     div[data-testid="column"]:hover {
         border-color: #58A6FF; 
         transform: translateY(-2px);
         transition: all 0.3s ease;
     }
 
-    /* 4. 텍스트 가독성 조정 */
-    h1, h2, h3, h4, p, div, span, label {
+    /* 4. 텍스트 가독성 조정 (전체 흰색 계열) */
+    h1, h2, h3, h4, p, div, span, label, li {
         color: #E6EDF3 !important;
     }
 
@@ -87,11 +85,10 @@ st.markdown("""
     /* 6. 입력창 스타일 (흰색 글씨 나오게) */
     .stTextArea textarea {
         background-color: #0D1117 !important;
-        color: #FFFFFF !important; /* 입력 글씨 흰색 */
+        color: #FFFFFF !important; 
         border: 1px solid #30363D !important;
         font-size: 15px;
     }
-    /* placeholder 색상 조정 */
     .stTextArea textarea::placeholder {
         color: #8B949E !important;
     }
@@ -121,7 +118,7 @@ if not st.session_state.authenticated:
         
         password = st.text_input("Access Code", type="password")
         
-        # 로그인 버튼도 잘 보이게 Primary 스타일 적용
+        # 로그인 버튼
         if st.button("Log In ➜", type="primary", use_container_width=True):
             if password == "66745500": 
                 st.session_state.authenticated = True
@@ -181,17 +178,16 @@ Structure the response into 4 Phases using horizontal dividers (---).
 4단계: 세일즈 실행 (Sales Execution)
 """
 
-# [중요 변경] 429 오류 해결을 위해 가장 안정적인 Pro 모델 사용
-# 1.5 Pro는 무료 티어 할당량이 넉넉하여 에러가 나지 않습니다.
+# [중요] Quota 오류 해결을 위해 1.5 Pro 사용
 model_name = "gemini-1.5-pro"
 
 # --- 6. 화면 로직 구현 ---
 
-# [HOME] 메인 대시보드 (다크 카드 UI)
+# [HOME] 메인 대시보드
 if st.session_state.view_mode == 'home':
     st.title("Tridge GTM Strategy Architect")
     st.markdown("#### GTM 전략 수립 시작하기")
-    st.markdown("") # 여백
+    st.markdown("") 
     st.markdown("") 
 
     # 2개의 카드 레이아웃
@@ -204,7 +200,7 @@ if st.session_state.view_mode == 'home':
         GTM 전략 수립 대상을 찾습니다.
         <br><br>
         """, unsafe_allow_html=True)
-        # CSS로 하늘색 버튼 + 검은 글씨 적용됨
+        # CSS로 하늘색 버튼 + 검은 글씨
         if st.button("최신 뉴스 검색 (Auto Scan)", use_container_width=True):
             go_auto()
             st.rerun()
@@ -214,3 +210,69 @@ if st.session_state.view_mode == 'home':
         st.markdown("""
         분석하고 싶은 특정 시장 이벤트나 뉴스 기사 내용을
         직접 입력하여 전략을 수립합니다.
+        <br><br>
+        """, unsafe_allow_html=True)
+        # CSS로 연노랑색 버튼 + 검은 글씨
+        if st.button("플레이북 생성 (Manual Input)", use_container_width=True):
+            go_manual()
+            st.rerun()
+
+# [MODE A] 자동 검색
+elif st.session_state.view_mode == 'auto':
+    st.title("🚀 최신 시장 리스크 스캔")
+    st.markdown("---")
+
+    if api_key:
+        prompt = "최근 2주간 글로벌 농식품 공급망에 타격을 준 주요 이슈 3가지를 구글 검색으로 찾아서 한국어로 요약해주고, 각각 Tridge의 영업 기회인지 분석해줘."
+        
+        with st.spinner("Gemini 1.5 Pro가 전 세계 뉴스를 분석 중입니다..."):
+            try:
+                genai.configure(api_key=api_key)
+                
+                tools = [
+                    genai.protos.Tool(
+                        google_search_retrieval=genai.protos.GoogleSearchRetrieval(
+                            dynamic_retrieval_config=genai.protos.DynamicRetrievalConfig(
+                                mode=genai.protos.DynamicRetrievalConfig.Mode.MODE_DYNAMIC
+                            )
+                        )
+                    )
+                ]
+                
+                tools_model = genai.GenerativeModel(model_name, tools=tools)
+                response = tools_model.generate_content(prompt)
+                st.markdown(response.text)
+            except Exception as e:
+                st.error(f"오류 발생: {e}")
+                st.info("Quota 오류가 계속되면, 잠시(1분) 기다렸다 다시 시도하세요.")
+    else:
+        st.error("API Key 설정이 필요합니다.")
+
+# [MODE B] 직접 입력
+elif st.session_state.view_mode == 'manual':
+    st.title("📝 뉴스 직접 분석 & 전략 수립")
+    st.markdown("---")
+
+    user_input = st.text_area("분석할 상황을 자세히 입력하세요", height=200, 
+                             placeholder="기사 내용을 붙여넣으세요...")
+    
+    if st.button("📊 GTM 플레이북 생성 (Start)", type="primary", use_container_width=True):
+        if user_input and api_key:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel(model_name=model_name, system_instruction=system_instruction)
+            prompt = f"다음 상황에 대한 4단계 GTM Playbook을 완벽한 한국어 보고서로 작성해줘:\n\n{user_input}"
+            
+            with st.spinner("Gemini 1.5 Pro가 심층 전략을 설계 중입니다..."):
+                try:
+                    response = model.generate_content(prompt)
+                    st.markdown(response.text)
+                except Exception as e:
+                    st.error(f"오류 발생: {e}")
+        elif not api_key:
+            st.error("API Key 설정이 필요합니다.")
+        else:
+            st.warning("내용을 입력해주세요.")
+
+# Footer
+st.markdown("---")
+st.caption("Powered by Tridge Data Intelligence & Google Gemini 1.5 Pro")
