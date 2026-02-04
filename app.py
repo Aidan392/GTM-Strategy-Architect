@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 from google.ai.generativelanguage import Content, Part
 
-# --- 1. 페이지 설정 (기본 화이트 모드) ---
+# --- 1. 페이지 설정 ---
 st.set_page_config(
     page_title="Tridge GTM Insight Portal",
     page_icon="🌍",
@@ -31,8 +31,7 @@ else:
 with st.sidebar:
     st.image("https://cdn.tridge.com/assets/images/logo-dark.svg", width=150)
     st.caption(sidebar_msg)
-    # 모델 버전 명시
-    st.caption("Engine: **Gemini 2.5 Pro**") 
+    st.caption("Engine: **Gemini 1.5 Pro**") # 모델명 변경 표시
     st.markdown("---")
     if st.session_state.view_mode != 'home':
         st.button("🏠 홈으로 이동", on_click=go_home, use_container_width=True)
@@ -55,44 +54,37 @@ Structure the response into 4 Phases using horizontal dividers (---).
 4단계: 세일즈 실행 (Sales Execution)
 """
 
-# [수정 완료] 요청하신 Gemini 2.5 Pro 모델명 적용
-model_name = "gemini-2.5-pro"
+# [해결책] 욕심을 버리고 안정적인 1.5 Pro 사용 (성능 차이 크지 않음)
+model_name = "gemini-1.5-pro"
 
 # --- 5. 화면 로직 구현 ---
 
-# [HOME] 메인 화면
+# [HOME]
 if st.session_state.view_mode == 'home':
     st.title("🌍 Tridge Global Market Strategist")
     st.markdown("### 시장의 위기를 기회로 전환하는 GTM 전략 설계 도구")
     st.divider()
     
-    st.write("🔻 **원하시는 작업을 선택해주세요**")
-    st.write("")
-    
     col1, col2 = st.columns(2)
     
     with col1:
-        # 기본 스타일 박스 (자동 탐지)
         st.info("🤖 **AI 자동 탐지 모드**")
         st.markdown("""
         구글 검색을 통해 최근 2주간의  
         **글로벌 농식품 공급망 이슈**를  
         자동으로 찾아냅니다.
         """)
-        # 기본 버튼 (잘 보임)
         if st.button("🚀 최신 시장 리스크 스캔하기", use_container_width=True):
             go_auto()
             st.rerun()
 
     with col2:
-        # 기본 스타일 박스 (직접 입력)
         st.warning("📝 **전문가 분석 모드**")
         st.markdown("""
         이미 알고 있는 특정 이슈나  
         **뉴스를 직접 입력**하여  
         심층 전략을 수립합니다.
         """)
-        # 기본 버튼 (잘 보임)
         if st.button("✍️ 뉴스 직접 입력해서 분석하기", use_container_width=True):
             go_manual()
             st.rerun()
@@ -105,7 +97,7 @@ elif st.session_state.view_mode == 'auto':
     if api_key:
         prompt = "최근 2주간 글로벌 농식품 공급망에 타격을 준 주요 이슈 3가지를 구글 검색으로 찾아서 한국어로 요약해주고, 각각 Tridge의 영업 기회인지 분석해줘."
         
-        with st.spinner("Gemini 2.5 Pro가 전 세계 뉴스를 분석 중입니다..."):
+        with st.spinner("Gemini 1.5 Pro가 전 세계 뉴스를 분석 중입니다..."):
             try:
                 genai.configure(api_key=api_key)
                 
@@ -124,7 +116,6 @@ elif st.session_state.view_mode == 'auto':
                 st.markdown(response.text)
             except Exception as e:
                 st.error(f"오류 발생: {e}")
-                st.info("Tip: 만약 404 오류가 뜬다면 AI Studio의 모델명(예: gemini-2.5-pro-001)을 확인해주세요.")
     else:
         st.error("API Key 설정이 필요합니다.")
 
@@ -142,7 +133,7 @@ elif st.session_state.view_mode == 'manual':
             model = genai.GenerativeModel(model_name=model_name, system_instruction=system_instruction)
             prompt = f"다음 상황에 대한 4단계 GTM Playbook을 완벽한 한국어 보고서로 작성해줘:\n\n{user_input}"
             
-            with st.spinner("Gemini 2.5 Pro가 심층 전략을 설계 중입니다..."):
+            with st.spinner("Gemini 1.5 Pro가 심층 전략을 설계 중입니다..."):
                 try:
                     response = model.generate_content(prompt)
                     st.markdown(response.text)
@@ -155,4 +146,4 @@ elif st.session_state.view_mode == 'manual':
 
 # Footer
 st.markdown("---")
-st.caption("Powered by Tridge Data Intelligence & Google Gemini 2.5 Pro")
+st.caption("Powered by Tridge Data Intelligence & Google Gemini 1.5 Pro")
