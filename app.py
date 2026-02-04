@@ -24,8 +24,12 @@ st.markdown("""
         background-color: #161B22;
         border-right: 1px solid #30363D;
     }
-    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {
+    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] div {
         color: #E6EDF3 !important;
+    }
+    /* 사이드바 버튼 텍스트 */
+    section[data-testid="stSidebar"] button {
+        color: #FAFAFA !important;
     }
 
     /* 3. 홈 화면 카드(Column) 박스 디자인 */
@@ -52,8 +56,8 @@ st.markdown("""
     
     /* [왼쪽] 자동 탐지 버튼 (하늘색 배경 + 검은 글씨) */
     div[data-testid="column"]:nth-of-type(1) div.stButton > button {
-        background-color: #4FC3F7 !important; 
-        color: #000000 !important; /* 검은색 글씨 강제 적용 */
+        background-color: #4FC3F7 !important; /* 하늘색 */
+        color: #000000 !important; /* 검은색 글씨 */
         border: none;
         font-weight: 800; /* 폰트 굵게 */
         padding: 15px 20px;
@@ -68,8 +72,8 @@ st.markdown("""
 
     /* [오른쪽] 직접 입력 버튼 (연노랑 배경 + 검은 글씨) */
     div[data-testid="column"]:nth-of-type(2) div.stButton > button {
-        background-color: #FFF59D !important; 
-        color: #000000 !important; /* 검은색 글씨 강제 적용 */
+        background-color: #FFF59D !important; /* 연노랑색 */
+        color: #000000 !important; /* 검은색 글씨 */
         border: none;
         font-weight: 800;
         padding: 15px 20px;
@@ -200,7 +204,7 @@ if st.session_state.view_mode == 'home':
         GTM 전략 수립 대상을 찾습니다.
         <br><br>
         """, unsafe_allow_html=True)
-        # CSS로 하늘색 버튼 + 검은 글씨
+        # CSS로 하늘색 버튼 + 검은 글씨 적용됨
         if st.button("최신 뉴스 검색 (Auto Scan)", use_container_width=True):
             go_auto()
             st.rerun()
@@ -212,7 +216,7 @@ if st.session_state.view_mode == 'home':
         직접 입력하여 전략을 수립합니다.
         <br><br>
         """, unsafe_allow_html=True)
-        # CSS로 연노랑색 버튼 + 검은 글씨
+        # CSS로 연노랑색 버튼 + 검은 글씨 적용됨
         if st.button("플레이북 생성 (Manual Input)", use_container_width=True):
             go_manual()
             st.rerun()
@@ -256,6 +260,7 @@ elif st.session_state.view_mode == 'manual':
     user_input = st.text_area("분석할 상황을 자세히 입력하세요", height=200, 
                              placeholder="기사 내용을 붙여넣으세요...")
     
+    # 여기 버튼은 기본 스타일(빨강/Primary) 유지하되 글씨색 확인
     if st.button("📊 GTM 플레이북 생성 (Start)", type="primary", use_container_width=True):
         if user_input and api_key:
             genai.configure(api_key=api_key)
