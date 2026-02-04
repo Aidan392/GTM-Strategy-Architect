@@ -10,10 +10,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- [디자인] CSS 스타일 주입 (다크 모드 & 가독성 개선) ---
+# --- [디자인] CSS 스타일 주입 (다크 모드 & 버튼 텍스트 강제 수정) ---
 st.markdown("""
 <style>
-    /* 1. 전체 배경색 (Deep Dark Blue/Black) */
+    /* 1. 전체 배경색 */
     .stApp {
         background-color: #0E1117;
         color: #FAFAFA;
@@ -27,12 +27,8 @@ st.markdown("""
     section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] div {
         color: #E6EDF3 !important;
     }
-    /* 사이드바 버튼 텍스트 */
-    section[data-testid="stSidebar"] button {
-        color: #FAFAFA !important;
-    }
 
-    /* 3. 홈 화면 카드(Column) 박스 디자인 */
+    /* 3. 카드(Column) 박스 디자인 */
     div[data-testid="column"] {
         background-color: #161B22; 
         border: 1px solid #30363D; 
@@ -47,60 +43,55 @@ st.markdown("""
         transition: all 0.3s ease;
     }
 
-    /* 4. 텍스트 가독성 조정 (전체 흰색 계열) */
+    /* 4. 텍스트 가독성 */
     h1, h2, h3, h4, p, div, span, label, li {
         color: #E6EDF3 !important;
     }
 
-    /* 5. 버튼 스타일 커스터마이징 (글씨 잘 보이게 수정) */
+    /* 5. [핵심 수정] 버튼 스타일 & 텍스트 색상 강제 적용 */
     
-    /* [왼쪽] 자동 탐지 버튼 (하늘색 배경 + 검은 글씨) */
+    /* 왼쪽 버튼 (하늘색) */
     div[data-testid="column"]:nth-of-type(1) div.stButton > button {
-        background-color: #4FC3F7 !important; /* 하늘색 */
-        color: #000000 !important; /* 검은색 글씨 */
+        background-color: #4FC3F7 !important; 
         border: none;
-        font-weight: 800; /* 폰트 굵게 */
         padding: 15px 20px;
         border-radius: 8px;
-        font-size: 16px;
     }
+    /* 버튼 안의 '모든 글자(p)'를 검은색으로 강제 변환 */
+    div[data-testid="column"]:nth-of-type(1) div.stButton > button p {
+        color: #000000 !important;
+        font-weight: 800 !important;
+        font-size: 16px !important;
+    }
+
+    /* 오른쪽 버튼 (연노랑색) */
+    div[data-testid="column"]:nth-of-type(2) div.stButton > button {
+        background-color: #FFF59D !important; 
+        border: none;
+        padding: 15px 20px;
+        border-radius: 8px;
+    }
+    /* 버튼 안의 '모든 글자(p)'를 검은색으로 강제 변환 */
+    div[data-testid="column"]:nth-of-type(2) div.stButton > button p {
+        color: #000000 !important;
+        font-weight: 800 !important;
+        font-size: 16px !important;
+    }
+
+    /* 호버 효과 */
     div[data-testid="column"]:nth-of-type(1) div.stButton > button:hover {
         background-color: #29B6F6 !important;
         box-shadow: 0 0 15px #29B6F6;
-        color: #000000 !important;
-    }
-
-    /* [오른쪽] 직접 입력 버튼 (연노랑 배경 + 검은 글씨) */
-    div[data-testid="column"]:nth-of-type(2) div.stButton > button {
-        background-color: #FFF59D !important; /* 연노랑색 */
-        color: #000000 !important; /* 검은색 글씨 */
-        border: none;
-        font-weight: 800;
-        padding: 15px 20px;
-        border-radius: 8px;
-        font-size: 16px;
     }
     div[data-testid="column"]:nth-of-type(2) div.stButton > button:hover {
         background-color: #FFF176 !important;
         box-shadow: 0 0 15px #FFF176;
-        color: #000000 !important;
     }
 
-    /* 6. 입력창 스타일 (흰색 글씨 나오게) */
-    .stTextArea textarea {
+    /* 6. 입력창 스타일 */
+    .stTextArea textarea, .stTextInput input {
         background-color: #0D1117 !important;
         color: #FFFFFF !important; 
-        border: 1px solid #30363D !important;
-        font-size: 15px;
-    }
-    .stTextArea textarea::placeholder {
-        color: #8B949E !important;
-    }
-    
-    /* 비밀번호 입력창 */
-    .stTextInput input {
-        background-color: #0D1117 !important;
-        color: #FFFFFF !important;
         border: 1px solid #30363D !important;
     }
 </style>
@@ -112,7 +103,6 @@ if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-    # 로그인 화면 디자인
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -122,7 +112,7 @@ if not st.session_state.authenticated:
         
         password = st.text_input("Access Code", type="password")
         
-        # 로그인 버튼
+        # 로그인 버튼 (이건 기본 Primary 색상 유지 - 흰글씨)
         if st.button("Log In ➜", type="primary", use_container_width=True):
             if password == "66745500": 
                 st.session_state.authenticated = True
@@ -133,7 +123,7 @@ if not st.session_state.authenticated:
 
 
 # ---------------------------------------------------------
-# 로그인 성공 후 메인 로직
+# 메인 로직
 # ---------------------------------------------------------
 
 # --- 2. 화면 상태 관리 ---
@@ -182,19 +172,17 @@ Structure the response into 4 Phases using horizontal dividers (---).
 4단계: 세일즈 실행 (Sales Execution)
 """
 
-# [중요] Quota 오류 해결을 위해 1.5 Pro 사용
 model_name = "gemini-1.5-pro"
 
 # --- 6. 화면 로직 구현 ---
 
-# [HOME] 메인 대시보드
+# [HOME]
 if st.session_state.view_mode == 'home':
     st.title("Tridge GTM Strategy Architect")
     st.markdown("#### GTM 전략 수립 시작하기")
     st.markdown("") 
     st.markdown("") 
 
-    # 2개의 카드 레이아웃
     col1, col2 = st.columns(2)
     
     with col1:
@@ -204,7 +192,7 @@ if st.session_state.view_mode == 'home':
         GTM 전략 수립 대상을 찾습니다.
         <br><br>
         """, unsafe_allow_html=True)
-        # CSS로 하늘색 버튼 + 검은 글씨 적용됨
+        # 하늘색 버튼 (CSS 적용됨)
         if st.button("최신 뉴스 검색 (Auto Scan)", use_container_width=True):
             go_auto()
             st.rerun()
@@ -216,7 +204,7 @@ if st.session_state.view_mode == 'home':
         직접 입력하여 전략을 수립합니다.
         <br><br>
         """, unsafe_allow_html=True)
-        # CSS로 연노랑색 버튼 + 검은 글씨 적용됨
+        # 연노랑 버튼 (CSS 적용됨)
         if st.button("플레이북 생성 (Manual Input)", use_container_width=True):
             go_manual()
             st.rerun()
@@ -248,7 +236,7 @@ elif st.session_state.view_mode == 'auto':
                 st.markdown(response.text)
             except Exception as e:
                 st.error(f"오류 발생: {e}")
-                st.info("Quota 오류가 계속되면, 잠시(1분) 기다렸다 다시 시도하세요.")
+                st.info("잠시 후 다시 시도하세요.")
     else:
         st.error("API Key 설정이 필요합니다.")
 
@@ -260,7 +248,7 @@ elif st.session_state.view_mode == 'manual':
     user_input = st.text_area("분석할 상황을 자세히 입력하세요", height=200, 
                              placeholder="기사 내용을 붙여넣으세요...")
     
-    # 여기 버튼은 기본 스타일(빨강/Primary) 유지하되 글씨색 확인
+    # 생성 버튼 (기본 Primary 스타일 유지 - 흰 글씨가 맞음)
     if st.button("📊 GTM 플레이북 생성 (Start)", type="primary", use_container_width=True):
         if user_input and api_key:
             genai.configure(api_key=api_key)
